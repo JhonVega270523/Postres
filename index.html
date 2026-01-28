@@ -23,6 +23,7 @@
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .header-julieta {
@@ -313,6 +314,54 @@
             font-style: italic;
         }
         
+        /* Mejoras específicas para móviles y toque */
+        .btn, .form-control, .form-select, .btn-sm {
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+            touch-action: manipulation;
+        }
+        
+        .modal-footer .btn {
+            min-width: 100px;
+        }
+        
+        /* Modal móvil optimizado */
+        @media (max-width: 576px) {
+            .modal-dialog {
+                margin: 10px;
+                max-height: 90vh;
+                display: flex;
+                align-items: center;
+            }
+            
+            .modal-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .modal-footer {
+                flex-wrap: nowrap;
+                padding: 1rem;
+            }
+            
+            .modal-footer .btn {
+                flex: 1;
+                min-height: 44px;
+                font-size: 1rem;
+                margin: 0 5px;
+            }
+            
+            /* Prevenir zoom en iOS al enfocar inputs */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+            
+            /* Asegurar que los botones del modal sean fácilmente tocables */
+            #confirmImportBtn, #confirmPaymentChange {
+                padding: 12px 20px;
+                font-weight: bold;
+            }
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 1200px) {
             .logo {
@@ -450,10 +499,6 @@
                 font-size: 0.9rem;
             }
             
-            .modal-dialog {
-                margin: 0.5rem;
-            }
-            
             footer p {
                 font-size: 0.8rem;
             }
@@ -498,13 +543,6 @@
             min-height: 36px;
         }
         
-        /* Fix for iOS zoom on input focus */
-        @media screen and (max-width: 768px) {
-            input, select, textarea {
-                font-size: 16px !important;
-            }
-        }
-        
         /* Stack buttons vertically on very small screens */
         @media (max-width: 350px) {
             .d-flex.justify-content-between {
@@ -515,6 +553,16 @@
             .d-flex.justify-content-between > div {
                 width: 100%;
                 text-align: center;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .modal-footer .btn {
+                width: 100%;
+                margin: 5px 0;
             }
         }
         
@@ -534,6 +582,21 @@
         .modal-body {
             max-height: 70vh;
             overflow-y: auto;
+        }
+        
+        /* Clase para forzar eventos táctiles */
+        .touch-optimized {
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Asegurar que los botones de confirmación sean claramente visibles */
+        #confirmImportBtn, #confirmPaymentChange {
+            position: relative;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -960,7 +1023,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-julieta" id="confirmPaymentChange">Confirmar</button>
+                    <button type="button" class="btn btn-julieta touch-optimized" id="confirmPaymentChange">
+                        Confirmar
+                    </button>
                 </div>
             </div>
         </div>
@@ -983,7 +1048,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-julieta" id="confirmImportBtn">Sí, Importar</button>
+                    <button type="button" class="btn btn-julieta touch-optimized" id="confirmImportBtn">
+                        Sí, Importar
+                    </button>
                 </div>
             </div>
         </div>
@@ -1008,6 +1075,8 @@
         let importData = null;
         let currentFilteredOrders = null;
         let isFiltered = false;
+        let importModalInstance = null;
+        let paymentModalInstance = null;
         
         // Cargar pedidos almacenados en localStorage al iniciar
         document.addEventListener('DOMContentLoaded', function() {
@@ -1032,7 +1101,70 @@
             
             // Configurar eventos para resumen dinámico
             setupDynamicSummary();
+            
+            // Configurar eventos táctiles para móviles
+            setupTouchEvents();
+            
+            // Inicializar modales
+            initModals();
         });
+        
+        // Inicializar instancias de modales
+        function initModals() {
+            const importModalElement = document.getElementById('importConfirmModal');
+            const paymentModalElement = document.getElementById('paymentModal');
+            
+            if (importModalElement) {
+                importModalInstance = new bootstrap.Modal(importModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+            
+            if (paymentModalElement) {
+                paymentModalInstance = new bootstrap.Modal(paymentModalElement, {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+            }
+        }
+        
+        // Configurar eventos táctiles para móviles
+        function setupTouchEvents() {
+            // Solución específica para eventos táctiles en móviles
+            document.addEventListener('touchstart', function(e) {
+                // Asegurar que los clics táctiles funcionen correctamente
+                const target = e.target;
+                
+                // Si es un botón de confirmación en un modal, manejar el evento
+                if (target.id === 'confirmImportBtn' || target.id === 'confirmPaymentChange') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Simular un clic después de un breve retraso
+                    setTimeout(() => {
+                        target.click();
+                    }, 50);
+                }
+            }, { passive: false });
+            
+            // También manejar clics normales como respaldo
+            document.addEventListener('click', function(e) {
+                const target = e.target;
+                
+                if (target.id === 'confirmImportBtn') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    confirmImport();
+                }
+                
+                if (target.id === 'confirmPaymentChange') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    confirmPaymentChangeHandler();
+                }
+            });
+        }
         
         // Configurar eventos para resumen dinámico
         function setupDynamicSummary() {
@@ -1082,9 +1214,6 @@
             document.getElementById('backupBtn').addEventListener('click', function() {
                 exportToExcel('Respaldo_Postres_Julieta_' + new Date().toISOString().split('T')[0]);
             });
-            
-            // Confirmar importación
-            document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
             
             // Actualizar tabla
             document.getElementById('refreshTableBtn').addEventListener('click', function() {
@@ -1274,8 +1403,17 @@
                     const importCount = importData.length;
                     document.getElementById('importCount').textContent = importCount;
                     
-                    const importModal = new bootstrap.Modal(document.getElementById('importConfirmModal'));
-                    importModal.show();
+                    // Usar la instancia del modal en lugar de crear una nueva
+                    if (importModalInstance) {
+                        importModalInstance.show();
+                    } else {
+                        // Fallback en caso de que no se haya inicializado
+                        const importModal = new bootstrap.Modal(document.getElementById('importConfirmModal'), {
+                            backdrop: 'static',
+                            keyboard: false
+                        });
+                        importModal.show();
+                    }
                     
                 } catch (error) {
                     console.error('Error al procesar archivo Excel:', error);
@@ -1373,7 +1511,7 @@
             return importedOrders;
         }
         
-        // Confirmar importación de datos
+        // Manejador mejorado para el botón de confirmar importación
         function confirmImport() {
             if (!importData || importData.length === 0) {
                 alert('No hay datos válidos para importar.');
@@ -1399,8 +1537,18 @@
             updateSummaryType(false);
             
             // Cerrar modal
-            const importModal = bootstrap.Modal.getInstance(document.getElementById('importConfirmModal'));
-            importModal.hide();
+            if (importModalInstance) {
+                importModalInstance.hide();
+            } else {
+                // Fallback: buscar instancia existente
+                const modalElement = document.getElementById('importConfirmModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
+            }
             
             alert(`Datos importados exitosamente: ${orders.length} pedidos`);
             
@@ -1718,13 +1866,21 @@
                 document.getElementById('modalPaymentPending').checked = true;
             }
             
-            // Mostrar modal
-            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
-            paymentModal.show();
+            // Mostrar modal usando la instancia existente
+            if (paymentModalInstance) {
+                paymentModalInstance.show();
+            } else {
+                // Fallback
+                const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'), {
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                paymentModal.show();
+            }
         }
         
-        // Confirmar cambio de estado de pago
-        document.getElementById('confirmPaymentChange').addEventListener('click', function() {
+        // Manejador mejorado para el botón de confirmar cambio de pago
+        function confirmPaymentChangeHandler() {
             const newStatus = document.querySelector('input[name="modalPaymentStatus"]:checked').value;
             const orderIndex = orders.findIndex(order => order.id == paymentModalOrderId);
             
@@ -1735,12 +1891,28 @@
                 updateSummaryWithFilters(currentFilteredOrders || orders);
                 
                 // Cerrar modal
-                const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-                paymentModal.hide();
+                if (paymentModalInstance) {
+                    paymentModalInstance.hide();
+                } else {
+                    // Fallback: buscar instancia existente
+                    const modalElement = document.getElementById('paymentModal');
+                    if (modalElement) {
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
+                    }
+                }
                 
                 alert(`Estado de pago actualizado para el pedido #${paymentModalOrderId}`);
             }
-        });
+        }
+        
+        // Asignar el manejador de eventos al botón de confirmación de pago
+        document.getElementById('confirmPaymentChange').addEventListener('click', confirmPaymentChangeHandler);
+        
+        // También asignar el manejador de eventos al botón de importación
+        document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
         
         // Actualizar la lista de pedidos en la tabla
         function updateOrderList(filteredOrders = null) {
