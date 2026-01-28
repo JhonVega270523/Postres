@@ -1,0 +1,2380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postres Julieta - Sistema de Pedidos</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <!-- SheetJS para Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --color-maracuya: #FFD166;
+            --color-milo: #8B4513;
+            --color-oreo: #3C2F2F;
+            --color-julieta: #FF69B4;
+            --color-paid: #28a745;
+            --color-pending: #dc3545;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .header-julieta {
+            background: linear-gradient(to right, var(--color-julieta), #FF8E53);
+            color: white;
+            padding: 1.5rem 0;
+            border-radius: 0 0 15px 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 2.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            color: var(--color-maracuya);
+        }
+        
+        .flavor-tag {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .flavor-maracuya {
+            background-color: rgba(255, 209, 102, 0.2);
+            color: #b38a00;
+            border: 1px solid var(--color-maracuya);
+        }
+        
+        .flavor-milo {
+            background-color: rgba(139, 69, 19, 0.2);
+            color: #8B4513;
+            border: 1px solid var(--color-milo);
+        }
+        
+        .flavor-oreo {
+            background-color: rgba(60, 47, 47, 0.2);
+            color: #3C2F2F;
+            border: 1px solid var(--color-oreo);
+        }
+        
+        .card-header {
+            background-color: rgba(255, 105, 180, 0.1);
+            border-bottom: 2px solid rgba(255, 105, 180, 0.3);
+        }
+        
+        .btn-julieta {
+            background-color: var(--color-julieta);
+            border-color: var(--color-julieta);
+            color: white;
+        }
+        
+        .btn-julieta:hover {
+            background-color: #ff4fa7;
+            border-color: #ff4fa7;
+            color: white;
+        }
+        
+        .btn-outline-julieta {
+            color: var(--color-julieta);
+            border-color: var(--color-julieta);
+        }
+        
+        .btn-outline-julieta:hover {
+            background-color: var(--color-julieta);
+            color: white;
+        }
+        
+        .btn-excel {
+            background-color: #217346;
+            border-color: #217346;
+            color: white;
+        }
+        
+        .btn-excel:hover {
+            background-color: #1b5e3a;
+            border-color: #1b5e3a;
+            color: white;
+        }
+        
+        .filter-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+        }
+        
+        .price-tag {
+            font-weight: bold;
+            color: var(--color-julieta);
+            font-size: 1.2rem;
+        }
+        
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--color-julieta);
+            color: white;
+            z-index: 10;
+        }
+        
+        .report-card {
+            border-left: 5px solid var(--color-julieta);
+        }
+        
+        .summary-filtered {
+            border-left: 5px solid #ffc107 !important;
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        .flavor-icon {
+            font-size: 1.2rem;
+            margin-right: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #dee2e6;
+        }
+        
+        .dessert-item {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .dessert-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .remove-dessert {
+            color: #dc3545;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        
+        .dessert-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .dessert-quantity input {
+            width: 70px;
+            text-align: center;
+        }
+        
+        .total-summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border: 1px dashed #dee2e6;
+        }
+        
+        .seller-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .payment-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .payment-paid {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--color-paid);
+            border: 1px solid var(--color-paid);
+        }
+        
+        .payment-pending {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: var(--color-pending);
+            border: 1px solid var(--color-pending);
+        }
+        
+        .btn-edit {
+            color: #0d6efd;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .btn-edit:hover {
+            color: #0b5ed7;
+        }
+        
+        .btn-delete {
+            color: #dc3545;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .btn-delete:hover {
+            color: #bb2d3b;
+        }
+        
+        .btn-payment {
+            font-size: 0.8rem;
+            padding: 0.15rem 0.5rem;
+        }
+        
+        .modal-header {
+            background-color: rgba(255, 105, 180, 0.1);
+        }
+        
+        .form-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .export-import-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .file-input-container {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-container input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .summary-indicator {
+            font-size: 0.7rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .logo {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .header-julieta {
+                padding: 1rem 0;
+            }
+            
+            .logo {
+                font-size: 1.6rem;
+            }
+            
+            .filter-section .row > div {
+                margin-bottom: 0.75rem;
+            }
+            
+            .table-responsive-md {
+                overflow-x: auto;
+            }
+            
+            .seller-summary-item {
+                flex: 0 0 33.333%;
+                max-width: 33.333%;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.4rem;
+            }
+            
+            .logo i {
+                font-size: 1.6rem;
+            }
+            
+            .dessert-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .table-container {
+                font-size: 0.85rem;
+            }
+            
+            .btn-edit, .btn-delete {
+                font-size: 0.9rem;
+                padding: 0.15rem 0.35rem;
+            }
+            
+            .table th, .table td {
+                padding: 0.5rem 0.3rem;
+            }
+            
+            .flavor-tag, .payment-status, .seller-badge {
+                font-size: 0.7rem;
+                padding: 0.15rem 0.5rem;
+            }
+            
+            .seller-summary-item {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+            
+            .report-card h3 {
+                font-size: 1.5rem;
+            }
+            
+            .card-header h4 {
+                font-size: 1.2rem;
+            }
+            
+            .filter-section h5 {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .logo {
+                font-size: 1.2rem;
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .logo i {
+                font-size: 1.4rem;
+            }
+            
+            .header-julieta p {
+                font-size: 0.9rem;
+                padding: 0 10px;
+            }
+            
+            .btn {
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .filter-section {
+                padding: 1rem;
+            }
+            
+            .seller-summary-item {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            
+            .table th, .table td {
+                padding: 0.4rem 0.2rem;
+                font-size: 0.8rem;
+            }
+            
+            .actions-cell {
+                min-width: 80px;
+            }
+            
+            .empty-state {
+                padding: 2rem 1rem;
+            }
+            
+            .empty-state h5 {
+                font-size: 1.1rem;
+            }
+            
+            .empty-state p {
+                font-size: 0.9rem;
+            }
+            
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            
+            footer p {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .logo {
+                font-size: 1rem;
+            }
+            
+            .header-julieta p {
+                font-size: 0.8rem;
+            }
+            
+            .table {
+                font-size: 0.75rem;
+            }
+            
+            .flavor-tag, .payment-status {
+                font-size: 0.65rem;
+                padding: 0.1rem 0.4rem;
+            }
+            
+            .btn-edit, .btn-delete {
+                font-size: 0.8rem;
+                padding: 0.1rem 0.25rem;
+            }
+        }
+        
+        /* Mobile-first table styling */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Improve touch targets on mobile */
+        .btn, .form-control, .form-select {
+            min-height: 44px;
+        }
+        
+        .btn-sm {
+            min-height: 36px;
+        }
+        
+        /* Fix for iOS zoom on input focus */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Stack buttons vertically on very small screens */
+        @media (max-width: 350px) {
+            .d-flex.justify-content-between {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .d-flex.justify-content-between > div {
+                width: 100%;
+                text-align: center;
+            }
+        }
+        
+        /* Seller summary responsive grid */
+        #sellerSummary {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -5px;
+        }
+        
+        .seller-summary-item {
+            padding: 0 5px;
+            margin-bottom: 10px;
+        }
+        
+        /* Ensure modals are mobile friendly */
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Encabezado -->
+        <header class="header-julieta">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-12 text-center">
+                        <div class="logo">
+                            <i class="bi bi-cake2"></i>
+                            <span>Postres Julieta</span>
+                        </div>
+                        <p class="mb-0 mt-2">Sistema de gestión de pedidos de postres - Todos los postres a $9.000</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="container">
+            <!-- Sección de exportación/importación -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="export-import-section">
+                        <h5 class="mb-3"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar / Importar Datos Excel</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="d-grid gap-2">
+                                    <button id="exportExcelBtn" class="btn btn-excel">
+                                        <i class="bi bi-file-earmark-excel"></i> Exportar a Excel (.xlsx)
+                                    </button>
+                                    <small class="text-muted text-center mt-1">Descarga todos los pedidos en formato Excel</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="file-input-container">
+                                    <button class="btn btn-outline-julieta w-100">
+                                        <i class="bi bi-upload"></i> Importar desde Excel
+                                    </button>
+                                    <input type="file" id="importExcelInput" accept=".xlsx, .xls">
+                                </div>
+                                <small class="text-muted text-center mt-1 d-block">Importa pedidos desde un archivo Excel</small>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i> <strong>Importante:</strong> Al importar, los datos actuales serán reemplazados. 
+                            <button id="backupBtn" class="btn btn-sm btn-outline-info ms-2">
+                                <i class="bi bi-download"></i> Hacer respaldo primero
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Formulario para nuevos pedidos -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Nuevo Pedido</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="orderForm">
+                                <div class="mb-3">
+                                    <label for="clientName" class="form-label">Nombre del cliente *</label>
+                                    <input type="text" class="form-control" id="clientName" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label mb-0">Sabores del postre</label>
+                                        <button type="button" class="btn btn-sm btn-outline-julieta" id="addDessertBtn">
+                                            <i class="bi bi-plus-circle"></i> Agregar Sabor
+                                        </button>
+                                    </div>
+                                    
+                                    <div id="dessertsContainer">
+                                        <!-- Los sabores se agregarán aquí dinámicamente -->
+                                    </div>
+                                    
+                                    <div id="noDessertsMessage" class="alert alert-warning mt-2">
+                                        <i class="bi bi-exclamation-triangle"></i> Agrega al menos un sabor de postre al pedido
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="deliveryDate" class="form-label">Fecha de entrega *</label>
+                                    <input type="date" class="form-control" id="deliveryDate" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="sellerName" class="form-label">Nombre del vendedor *</label>
+                                    <select class="form-select" id="sellerName" required>
+                                        <option value="" selected disabled>Seleccione un vendedor</option>
+                                        <option value="Jhon">Jhon</option>
+                                        <option value="Laura">Laura</option>
+                                        <option value="Jose">Jose</option>
+                                        <option value="Faver">Faver</option>
+                                        <option value="Nora">Nora</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Estado de pago *</label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="paymentStatus" id="paymentPaid" value="pagado" checked>
+                                            <label class="form-check-label" for="paymentPaid">
+                                                <span class="payment-status payment-paid">Pagado</span>
+                                            </label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="paymentStatus" id="paymentPending" value="debe">
+                                            <label class="form-check-label" for="paymentPending">
+                                                <span class="payment-status payment-pending">Debe</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="total-summary">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Precio unitario:</span>
+                                        <span class="price-tag">$9.000</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span>Total postres:</span>
+                                        <span id="totalDessertsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <strong>Total a pagar:</strong>
+                                        <strong id="totalPrice" class="price-tag">$0</strong>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" id="editOrderId" value="">
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                    <button type="button" class="btn btn-secondary me-md-2" id="cancelEditBtn" style="display: none;">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-julieta" id="submitOrderBtn">
+                                        <i class="bi bi-check-circle"></i> Registrar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Informe por vendedor -->
+                    <div class="card shadow mt-4">
+                        <div class="card-header">
+                            <h4 class="mb-0"><i class="bi bi-bar-chart"></i> Informe por Vendedor</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="sellerReportSelect" class="form-label">Seleccione vendedor</label>
+                                <select class="form-select" id="sellerReportSelect">
+                                    <option value="all">Todos los vendedores</option>
+                                    <option value="Jhon">Jhon</option>
+                                    <option value="Laura">Laura</option>
+                                    <option value="Jose">Jose</option>
+                                    <option value="Faver">Faver</option>
+                                    <option value="Nora">Nora</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentReportSelect" class="form-label">Estado de pago</label>
+                                <select class="form-select" id="paymentReportSelect">
+                                    <option value="all">Todos los estados</option>
+                                    <option value="pagado">Pagado</option>
+                                    <option value="debe">Debe</option>
+                                </select>
+                            </div>
+                            <button id="generateReport" class="btn btn-julieta w-100">
+                                <i class="bi bi-file-earmark-text"></i> Generar Informe
+                            </button>
+                            
+                            <div id="reportResult" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de pedidos y filtros -->
+                <div class="col-lg-8">
+                    <!-- Filtros -->
+                    <div class="filter-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros de Pedidos</h5>
+                            <div class="d-flex">
+                                <span id="orderCount" class="badge bg-julieta me-2">0 pedidos</span>
+                                <span id="pendingCount" class="badge bg-danger">0 pendientes</span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <label for="filterClient" class="form-label">Cliente</label>
+                                <input type="text" class="form-control" id="filterClient" placeholder="Buscar por nombre">
+                            </div>
+                            <div class="col-lg-2 col-md-4 mb-3">
+                                <label for="filterFlavor" class="form-label">Sabor</label>
+                                <select class="form-select" id="filterFlavor">
+                                    <option value="all">Todos</option>
+                                    <option value="Maracuyá">Maracuyá</option>
+                                    <option value="Milo">Milo</option>
+                                    <option value="Oreo">Oreo</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 mb-3">
+                                <label for="filterSeller" class="form-label">Vendedor</label>
+                                <select class="form-select" id="filterSeller">
+                                    <option value="all">Todos</option>
+                                    <option value="Jhon">Jhon</option>
+                                    <option value="Laura">Laura</option>
+                                    <option value="Jose">Jose</option>
+                                    <option value="Faver">Faver</option>
+                                    <option value="Nora">Nora</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-2 col-md-4 mb-3">
+                                <label for="filterPayment" class="form-label">Estado Pago</label>
+                                <select class="form-select" id="filterPayment">
+                                    <option value="all">Todos</option>
+                                    <option value="pagado">Pagado</option>
+                                    <option value="debe">Debe</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <label for="filterDate" class="form-label">Fecha de entrega</label>
+                                <input type="date" class="form-control" id="filterDate">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button id="clearFilters" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Limpiar Filtros
+                            </button>
+                            <div class="text-end">
+                                <small class="text-muted d-block d-md-inline">
+                                    <span id="isFilteredIndicator" style="display: none;">
+                                        <i class="bi bi-funnel-fill text-warning"></i> Mostrando datos filtrados
+                                    </span>
+                                    <span id="filteredCount">0</span> de <span id="totalCount">0</span> pedidos
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabla de pedidos -->
+                    <div class="card shadow">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0"><i class="bi bi-list-check"></i> Pedidos Registrados</h4>
+                            <button id="refreshTableBtn" class="btn btn-sm btn-outline-julieta">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <div class="table-container">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Cliente</th>
+                                            <th class="d-none d-md-table-cell">Sabores</th>
+                                            <th>Cantidad</th>
+                                            <th>Total</th>
+                                            <th class="d-none d-sm-table-cell">Fecha Entrega</th>
+                                            <th>Vendedor</th>
+                                            <th>Estado</th>
+                                            <th class="actions-cell">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ordersTable">
+                                        <!-- Los pedidos se cargarán aquí dinámicamente -->
+                                    </tbody>
+                                </table>
+                                <div id="emptyOrders" class="empty-state">
+                                    <i class="bi bi-cart-x"></i>
+                                    <h5>No hay pedidos registrados</h5>
+                                    <p>Agrega tu primer pedido usando el formulario</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumen de ventas -->
+                    <div class="card shadow mt-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0"><i class="bi bi-graph-up"></i> Resumen de Ventas</h4>
+                            <div>
+                                <span id="summaryType" class="badge bg-info">Todos los pedidos</span>
+                                <button id="resetSummaryBtn" class="btn btn-sm btn-outline-warning ms-2" style="display: none;">
+                                    <i class="bi bi-x-circle"></i> Restablecer
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info" id="filteredSummaryAlert" style="display: none;">
+                                <i class="bi bi-info-circle"></i> Mostrando resumen de pedidos filtrados. 
+                                <button id="showAllSummaryBtn" class="btn btn-sm btn-outline-info ms-2">
+                                    <i class="bi bi-eye"></i> Ver todos los pedidos
+                                </button>
+                            </div>
+                            
+                            <div class="row text-center">
+                                <div class="col-6 col-md-3 mb-3">
+                                    <div class="report-card p-2 p-md-3" id="summaryTotalOrdersCard">
+                                        <h6 class="d-none d-md-block">Total Pedidos</h6>
+                                        <h6 class="d-md-none">Pedidos</h6>
+                                        <h3 id="totalOrders">0</h3>
+                                        <div class="summary-indicator" id="totalOrdersIndicator">
+                                            <span id="filteredOrders">0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-3">
+                                    <div class="report-card p-2 p-md-3" id="summaryTotalDessertsCard">
+                                        <h6 class="d-none d-md-block">Total Postres</h6>
+                                        <h6 class="d-md-none">Postres</h6>
+                                        <h3 id="totalDesserts">0</h3>
+                                        <div class="summary-indicator" id="totalDessertsIndicator">
+                                            <span id="filteredDesserts">0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-3">
+                                    <div class="report-card p-2 p-md-3" id="summaryTotalSalesCard">
+                                        <h6 class="d-none d-md-block">Ventas Totales</h6>
+                                        <h6 class="d-md-none">Ventas</h6>
+                                        <h3 id="totalSales">$0</h3>
+                                        <div class="summary-indicator" id="totalSalesIndicator">
+                                            <span id="filteredSales">$0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3 mb-3">
+                                    <div class="report-card p-2 p-md-3" id="summaryPendingAmountCard">
+                                        <h6 class="d-none d-md-block">Por Cobrar</h6>
+                                        <h6 class="d-md-none">Pendiente</h6>
+                                        <h3 id="pendingAmount">$0</h3>
+                                        <div class="summary-indicator" id="pendingAmountIndicator">
+                                            <span id="filteredPending">$0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4 mb-3">
+                                    <div class="p-2 border rounded" id="summaryMaracuyaCard">
+                                        <small class="text-muted">Maracuyá</small>
+                                        <h5 id="totalMaracuya">0</h5>
+                                        <div class="summary-indicator">
+                                            <span id="filteredMaracuya">0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-3">
+                                    <div class="p-2 border rounded" id="summaryMiloCard">
+                                        <small class="text-muted">Milo</small>
+                                        <h5 id="totalMilo">0</h5>
+                                        <div class="summary-indicator">
+                                            <span id="filteredMilo">0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-3">
+                                    <div class="p-2 border rounded" id="summaryOreoCard">
+                                        <small class="text-muted">Oreo</small>
+                                        <h5 id="totalOreo">0</h5>
+                                        <div class="summary-indicator">
+                                            <span id="filteredOreo">0</span> filtrados
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Resumen por vendedor -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Resumen por Vendedor</h6>
+                                <small class="text-muted" id="sellerSummaryTitle">Todos los vendedores</small>
+                            </div>
+                            <div class="row text-center" id="sellerSummary">
+                                <!-- Se llenará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="mt-5 py-3 text-center text-muted">
+            <p>Sistema Postres Julieta &copy; 2023 - Todos los postres son a $9.000 por unidad</p>
+            <p class="small">Los datos se guardan automáticamente en tu navegador. Usa la función de Exportar/Importar para transferir datos entre dispositivos.</p>
+        </footer>
+    </div>
+
+    <!-- Modal para confirmar cambio de estado de pago -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Cambiar Estado de Pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Seleccione el nuevo estado de pago para el pedido #<span id="modalOrderId"></span> de <span id="modalClientName"></span>:</p>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="modalPaymentStatus" id="modalPaymentPaid" value="pagado">
+                            <label class="form-check-label" for="modalPaymentPaid">
+                                <span class="payment-status payment-paid">Pagado</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="modalPaymentStatus" id="modalPaymentPending" value="debe">
+                            <label class="form-check-label" for="modalPaymentPending">
+                                <span class="payment-status payment-pending">Debe</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Total del pedido: <strong id="modalOrderTotal"></strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-julieta" id="confirmPaymentChange">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar importación -->
+    <div class="modal fade" id="importConfirmModal" tabindex="-1" aria-labelledby="importConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importConfirmModalLabel">Confirmar Importación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>¡Advertencia!</strong> Al importar, todos los datos actuales serán reemplazados.
+                    </div>
+                    <p>Se importarán <span id="importCount">0</span> pedidos desde el archivo Excel.</p>
+                    <p>¿Está seguro de que desea continuar?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-julieta" id="confirmImportBtn">Sí, Importar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Precio fijo por postre
+        const PRICE_PER_DESSERT = 9000;
+        
+        // Vendedores del sistema
+        const SELLERS = ['Jhon', 'Laura', 'Jose', 'Faver', 'Nora'];
+        
+        // Array para almacenar todos los pedidos
+        let orders = [];
+        let nextId = 1;
+        let dessertCounter = 0;
+        let editingOrderId = null;
+        let paymentModalOrderId = null;
+        let importData = null;
+        let currentFilteredOrders = null;
+        let isFiltered = false;
+        
+        // Cargar pedidos almacenados en localStorage al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrdersFromStorage();
+            updateOrderList();
+            updateSummary();
+            updateSummaryWithFilters(orders); // Mostrar resumen completo al inicio
+            
+            // Establecer fecha mínima como hoy para el campo de fecha de entrega
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('deliveryDate').min = today;
+            document.getElementById('deliveryDate').value = today;
+            
+            // Agregar un sabor por defecto al formulario
+            addDessertItem();
+            
+            // Actualizar total inicial
+            updateTotal();
+            
+            // Configurar eventos para exportación/importación
+            setupExcelFeatures();
+            
+            // Configurar eventos para resumen dinámico
+            setupDynamicSummary();
+        });
+        
+        // Configurar eventos para resumen dinámico
+        function setupDynamicSummary() {
+            // Botón para mostrar todos los pedidos en el resumen
+            document.getElementById('showAllSummaryBtn').addEventListener('click', function() {
+                clearFilters();
+                updateOrderList();
+                updateSummaryWithFilters(orders);
+                updateSummaryType(false);
+            });
+            
+            // Botón para restablecer resumen
+            document.getElementById('resetSummaryBtn').addEventListener('click', function() {
+                clearFilters();
+                updateOrderList();
+                updateSummaryWithFilters(orders);
+                updateSummaryType(false);
+            });
+        }
+        
+        // Cargar pedidos desde localStorage
+        function loadOrdersFromStorage() {
+            const storedOrders = localStorage.getItem('postresJulietaOrders');
+            if (storedOrders) {
+                orders = JSON.parse(storedOrders);
+                // Encontrar el ID máximo para continuar la numeración
+                if (orders.length > 0) {
+                    nextId = Math.max(...orders.map(order => order.id)) + 1;
+                }
+            }
+        }
+        
+        // Guardar pedidos en localStorage
+        function saveOrdersToStorage() {
+            localStorage.setItem('postresJulietaOrders', JSON.stringify(orders));
+        }
+        
+        // Configurar funcionalidades de Excel
+        function setupExcelFeatures() {
+            // Exportar a Excel
+            document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+            
+            // Importar desde Excel
+            document.getElementById('importExcelInput').addEventListener('change', handleExcelImport);
+            
+            // Botón para hacer respaldo antes de importar
+            document.getElementById('backupBtn').addEventListener('click', function() {
+                exportToExcel('Respaldo_Postres_Julieta_' + new Date().toISOString().split('T')[0]);
+            });
+            
+            // Confirmar importación
+            document.getElementById('confirmImportBtn').addEventListener('click', confirmImport);
+            
+            // Actualizar tabla
+            document.getElementById('refreshTableBtn').addEventListener('click', function() {
+                updateOrderList();
+                updateSummaryWithFilters(orders);
+                updateSummaryType(false);
+            });
+        }
+        
+        // Exportar datos a Excel
+        function exportToExcel(filename = 'Pedidos_Postres_Julieta') {
+            const ordersToExport = currentFilteredOrders || orders;
+            
+            if (ordersToExport.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+            
+            try {
+                // Preparar datos para Excel
+                const excelData = [];
+                
+                // Encabezados
+                excelData.push([
+                    'ID', 'Cliente', 'Sabores', 'Cantidad Total', 'Total', 
+                    'Fecha Entrega', 'Vendedor', 'Estado Pago', 'Fecha Creación'
+                ]);
+                
+                // Datos de pedidos
+                ordersToExport.forEach(order => {
+                    // Crear cadena de sabores
+                    let flavorsStr = '';
+                    order.desserts.forEach(dessert => {
+                        flavorsStr += `${dessert.quantity} ${dessert.flavor}, `;
+                    });
+                    flavorsStr = flavorsStr.slice(0, -2); // Remover última coma y espacio
+                    
+                    excelData.push([
+                        order.id,
+                        order.clientName,
+                        flavorsStr,
+                        order.totalQuantity,
+                        order.total,
+                        formatDate(order.deliveryDate),
+                        order.sellerName,
+                        order.paymentStatus === 'pagado' ? 'Pagado' : 'Debe',
+                        formatDateTime(order.dateCreated)
+                    ]);
+                });
+                
+                // Crear libro de trabajo
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+                
+                // Agregar hoja de resumen
+                const summaryData = generateSummaryData(ordersToExport);
+                const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+                
+                // Generar y descargar archivo
+                XLSX.writeFile(wb, `${filename}.xlsx`);
+                
+                alert(`Datos exportados exitosamente: ${ordersToExport.length} pedidos`);
+            } catch (error) {
+                console.error('Error al exportar a Excel:', error);
+                alert('Error al exportar los datos. Por favor, intente nuevamente.');
+            }
+        }
+        
+        // Generar datos para hoja de resumen
+        function generateSummaryData(ordersToSummarize) {
+            const summaryData = [];
+            
+            // Encabezados
+            summaryData.push(['RESUMEN DE VENTAS - POSTRES JULIETA']);
+            summaryData.push(['Generado el:', new Date().toLocaleString('es-ES')]);
+            summaryData.push(['Mostrando:', isFiltered ? 'Pedidos filtrados' : 'Todos los pedidos']);
+            summaryData.push([]);
+            
+            // Estadísticas generales
+            const totalOrders = ordersToSummarize.length;
+            const totalDesserts = ordersToSummarize.reduce((sum, order) => sum + order.totalQuantity, 0);
+            const totalSales = ordersToSummarize.reduce((sum, order) => sum + order.total, 0);
+            const pendingAmount = ordersToSummarize
+                .filter(order => order.paymentStatus === 'debe')
+                .reduce((sum, order) => sum + order.total, 0);
+            
+            summaryData.push(['ESTADÍSTICAS GENERALES']);
+            summaryData.push(['Total Pedidos:', totalOrders]);
+            summaryData.push(['Total Postres:', totalDesserts]);
+            summaryData.push(['Ventas Totales:', `$${totalSales.toLocaleString()}`]);
+            summaryData.push(['Por Cobrar:', `$${pendingAmount.toLocaleString()}`]);
+            summaryData.push([]);
+            
+            // Por sabor
+            let totalMaracuya = 0;
+            let totalMilo = 0;
+            let totalOreo = 0;
+            
+            ordersToSummarize.forEach(order => {
+                order.desserts.forEach(dessert => {
+                    if (dessert.flavor === 'Maracuyá') totalMaracuya += dessert.quantity;
+                    else if (dessert.flavor === 'Milo') totalMilo += dessert.quantity;
+                    else if (dessert.flavor === 'Oreo') totalOreo += dessert.quantity;
+                });
+            });
+            
+            summaryData.push(['DISTRIBUCIÓN POR SABOR']);
+            summaryData.push(['Maracuyá:', totalMaracuya]);
+            summaryData.push(['Milo:', totalMilo]);
+            summaryData.push(['Oreo:', totalOreo]);
+            summaryData.push([]);
+            
+            // Por vendedor
+            summaryData.push(['VENTAS POR VENDEDOR']);
+            summaryData.push(['Vendedor', 'Pedidos', 'Postres', 'Ventas', 'Por Cobrar']);
+            
+            const sellerStats = {};
+            SELLERS.forEach(seller => {
+                sellerStats[seller] = {
+                    orders: 0,
+                    desserts: 0,
+                    sales: 0,
+                    pending: 0
+                };
+            });
+            
+            ordersToSummarize.forEach(order => {
+                const seller = order.sellerName;
+                if (sellerStats[seller]) {
+                    sellerStats[seller].orders += 1;
+                    sellerStats[seller].desserts += order.totalQuantity;
+                    sellerStats[seller].sales += order.total;
+                    
+                    if (order.paymentStatus === 'debe') {
+                        sellerStats[seller].pending += order.total;
+                    }
+                }
+            });
+            
+            SELLERS.forEach(seller => {
+                const stats = sellerStats[seller];
+                if (stats.orders > 0) {
+                    summaryData.push([
+                        seller,
+                        stats.orders,
+                        stats.desserts,
+                        `$${stats.sales.toLocaleString()}`,
+                        `$${stats.pending.toLocaleString()}`
+                    ]);
+                }
+            });
+            
+            return summaryData;
+        }
+        
+        // Manejar importación de Excel
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Obtener la primera hoja
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convertir a JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // Validar estructura del archivo
+                    if (jsonData.length < 2) {
+                        alert('El archivo Excel no contiene datos válidos.');
+                        return;
+                    }
+                    
+                    // Procesar datos
+                    importData = processExcelData(jsonData);
+                    
+                    // Mostrar modal de confirmación
+                    const importCount = importData.length;
+                    document.getElementById('importCount').textContent = importCount;
+                    
+                    const importModal = new bootstrap.Modal(document.getElementById('importConfirmModal'));
+                    importModal.show();
+                    
+                } catch (error) {
+                    console.error('Error al procesar archivo Excel:', error);
+                    alert('Error al leer el archivo Excel. Asegúrese de que sea un archivo .xlsx válido.');
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('Error al leer el archivo. Por favor, intente nuevamente.');
+            };
+            
+            reader.readAsArrayBuffer(file);
+            
+            // Limpiar input para permitir importar el mismo archivo de nuevo
+            event.target.value = '';
+        }
+        
+        // Procesar datos de Excel
+        function processExcelData(excelData) {
+            const importedOrders = [];
+            
+            // Saltar encabezados (fila 0) y procesar desde fila 1
+            for (let i = 1; i < excelData.length; i++) {
+                const row = excelData[i];
+                if (!row || row.length < 8) continue;
+                
+                try {
+                    // Parsear sabores (formato: "2 Maracuyá, 1 Milo, 3 Oreo")
+                    const flavorsStr = row[2] || '';
+                    const desserts = [];
+                    let totalQuantity = 0;
+                    
+                    if (flavorsStr) {
+                        const flavorParts = flavorsStr.split(',');
+                        flavorParts.forEach(part => {
+                            const trimmed = part.trim();
+                            const match = trimmed.match(/^(\d+)\s+(Maracuyá|Milo|Oreo)$/);
+                            if (match) {
+                                const quantity = parseInt(match[1]);
+                                const flavor = match[2];
+                                desserts.push({ flavor, quantity });
+                                totalQuantity += quantity;
+                            }
+                        });
+                    }
+                    
+                    // Si no se pudieron parsear sabores, usar cantidad total
+                    if (desserts.length === 0) {
+                        const quantity = parseInt(row[3]) || 1;
+                        desserts.push({ flavor: 'Maracuyá', quantity });
+                        totalQuantity = quantity;
+                    }
+                    
+                    // Parsear fecha (formato DD/MM/YYYY o YYYY-MM-DD)
+                    let deliveryDate = row[5] || new Date().toISOString().split('T')[0];
+                    if (deliveryDate.includes('/')) {
+                        const parts = deliveryDate.split('/');
+                        if (parts.length === 3) {
+                            deliveryDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        }
+                    }
+                    
+                    // Validar vendedor
+                    let sellerName = row[6] || 'Jhon';
+                    if (!SELLERS.includes(sellerName)) {
+                        sellerName = 'Jhon';
+                    }
+                    
+                    // Validar estado de pago
+                    let paymentStatus = (row[7] || 'pagado').toLowerCase();
+                    if (paymentStatus !== 'pagado' && paymentStatus !== 'debe') {
+                        paymentStatus = 'pagado';
+                    }
+                    
+                    // Crear objeto de pedido
+                    const order = {
+                        id: parseInt(row[0]) || i,
+                        clientName: row[1] || `Cliente ${i}`,
+                        desserts,
+                        totalQuantity,
+                        total: parseInt(row[4]) || totalQuantity * PRICE_PER_DESSERT,
+                        deliveryDate,
+                        sellerName,
+                        paymentStatus,
+                        dateCreated: row[8] || new Date().toISOString()
+                    };
+                    
+                    importedOrders.push(order);
+                    
+                } catch (error) {
+                    console.warn(`Error procesando fila ${i}:`, error);
+                }
+            }
+            
+            return importedOrders;
+        }
+        
+        // Confirmar importación de datos
+        function confirmImport() {
+            if (!importData || importData.length === 0) {
+                alert('No hay datos válidos para importar.');
+                return;
+            }
+            
+            // Reemplazar datos actuales
+            orders = importData;
+            
+            // Encontrar el ID máximo
+            if (orders.length > 0) {
+                nextId = Math.max(...orders.map(order => order.id)) + 1;
+            } else {
+                nextId = 1;
+            }
+            
+            // Guardar en localStorage
+            saveOrdersToStorage();
+            
+            // Actualizar interfaz
+            updateOrderList();
+            updateSummaryWithFilters(orders);
+            updateSummaryType(false);
+            
+            // Cerrar modal
+            const importModal = bootstrap.Modal.getInstance(document.getElementById('importConfirmModal'));
+            importModal.hide();
+            
+            alert(`Datos importados exitosamente: ${orders.length} pedidos`);
+            
+            // Limpiar datos de importación
+            importData = null;
+        }
+        
+        // Formatear fecha y hora
+        function formatDateTime(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES');
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // Agregar un nuevo sabor al formulario
+        function addDessertItem(flavor = 'Maracuyá', quantity = 1) {
+            dessertCounter++;
+            const container = document.getElementById('dessertsContainer');
+            const noDessertsMessage = document.getElementById('noDessertsMessage');
+            
+            // Ocultar mensaje de "no hay sabores"
+            noDessertsMessage.style.display = 'none';
+            
+            const dessertId = `dessert-${dessertCounter}`;
+            const dessertItem = document.createElement('div');
+            dessertItem.className = 'dessert-item';
+            dessertItem.id = dessertId;
+            
+            // Determinar el ícono según el sabor
+            let flavorIcon = 'bi-emoji-smile';
+            let flavorColor = 'var(--color-maracuya)';
+            
+            if (flavor === 'Milo') {
+                flavorIcon = 'bi-cup-straw';
+                flavorColor = 'var(--color-milo)';
+            } else if (flavor === 'Oreo') {
+                flavorIcon = 'bi-moon-stars';
+                flavorColor = 'var(--color-oreo)';
+            }
+            
+            dessertItem.innerHTML = `
+                <div class="dessert-item-header">
+                    <div>
+                        <i class="bi ${flavorIcon} flavor-icon" style="color: ${flavorColor};"></i>
+                        <strong>Sabor ${dessertCounter}</strong>
+                    </div>
+                    <button type="button" class="remove-dessert" onclick="removeDessertItem('${dessertId}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label">Tipo de postre</label>
+                        <select class="form-select dessert-flavor" onchange="updateTotal()">
+                            <option value="Maracuyá" ${flavor === 'Maracuyá' ? 'selected' : ''}>Maracuyá</option>
+                            <option value="Milo" ${flavor === 'Milo' ? 'selected' : ''}>Milo</option>
+                            <option value="Oreo" ${flavor === 'Oreo' ? 'selected' : ''}>Oreo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Cantidad</label>
+                        <div class="dessert-quantity">
+                            <input type="number" class="form-control dessert-quantity-input" 
+                                   min="1" value="${quantity}" onchange="updateTotal()" oninput="updateTotal()">
+                            <span>unidades</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(dessertItem);
+            updateTotal();
+        }
+        
+        // Eliminar un sabor del formulario
+        function removeDessertItem(dessertId) {
+            const item = document.getElementById(dessertId);
+            if (item) {
+                item.remove();
+                
+                // Verificar si quedan sabores
+                const container = document.getElementById('dessertsContainer');
+                const noDessertsMessage = document.getElementById('noDessertsMessage');
+                
+                if (container.children.length === 0) {
+                    noDessertsMessage.style.display = 'block';
+                }
+                
+                updateTotal();
+            }
+        }
+        
+        // Agregar evento al botón "Agregar Sabor"
+        document.getElementById('addDessertBtn').addEventListener('click', function() {
+            addDessertItem();
+        });
+        
+        // Calcular total del pedido actual
+        function updateTotal() {
+            const dessertItems = document.querySelectorAll('.dessert-item');
+            let totalDesserts = 0;
+            let totalPrice = 0;
+            
+            dessertItems.forEach(item => {
+                const quantityInput = item.querySelector('.dessert-quantity-input');
+                const quantity = parseInt(quantityInput.value) || 0;
+                
+                totalDesserts += quantity;
+                totalPrice += quantity * PRICE_PER_DESSERT;
+            });
+            
+            document.getElementById('totalDessertsCount').textContent = totalDesserts;
+            document.getElementById('totalPrice').textContent = `$${totalPrice.toLocaleString()}`;
+        }
+        
+        // Manejar envío del formulario
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obtener valores del formulario
+            const clientName = document.getElementById('clientName').value.trim();
+            const deliveryDate = document.getElementById('deliveryDate').value;
+            const sellerName = document.getElementById('sellerName').value;
+            const paymentStatus = document.querySelector('input[name="paymentStatus"]:checked').value;
+            const editOrderId = document.getElementById('editOrderId').value;
+            
+            // Obtener los sabores y cantidades
+            const dessertItems = document.querySelectorAll('.dessert-item');
+            const desserts = [];
+            let totalQuantity = 0;
+            
+            dessertItems.forEach(item => {
+                const flavorSelect = item.querySelector('.dessert-flavor');
+                const quantityInput = item.querySelector('.dessert-quantity-input');
+                
+                const flavor = flavorSelect.value;
+                const quantity = parseInt(quantityInput.value) || 0;
+                
+                if (quantity > 0) {
+                    desserts.push({
+                        flavor: flavor,
+                        quantity: quantity
+                    });
+                    totalQuantity += quantity;
+                }
+            });
+            
+            // Validar datos
+            if (!clientName || !deliveryDate || !sellerName) {
+                alert('Por favor, complete todos los campos del formulario.');
+                return;
+            }
+            
+            if (desserts.length === 0) {
+                alert('Por favor, agregue al menos un sabor de postre con cantidad mayor a 0.');
+                return;
+            }
+            
+            if (totalQuantity === 0) {
+                alert('La cantidad total de postres debe ser mayor a 0.');
+                return;
+            }
+            
+            // Calcular total
+            const totalPrice = totalQuantity * PRICE_PER_DESSERT;
+            
+            if (editOrderId) {
+                // Actualizar pedido existente
+                const orderIndex = orders.findIndex(order => order.id == editOrderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex] = {
+                        ...orders[orderIndex],
+                        clientName,
+                        desserts,
+                        totalQuantity,
+                        total: totalPrice,
+                        deliveryDate,
+                        sellerName,
+                        paymentStatus
+                    };
+                    
+                    alert(`Pedido #${editOrderId} actualizado exitosamente para ${clientName}!`);
+                }
+            } else {
+                // Crear nuevo pedido
+                const order = {
+                    id: nextId++,
+                    clientName,
+                    desserts,
+                    totalQuantity,
+                    total: totalPrice,
+                    deliveryDate,
+                    sellerName,
+                    paymentStatus,
+                    dateCreated: new Date().toISOString()
+                };
+                
+                // Agregar pedido al array
+                orders.push(order);
+                
+                alert(`¡Pedido #${order.id} registrado exitosamente para ${clientName}!\nVendedor: ${sellerName}\nTotal: $${totalPrice.toLocaleString()}`);
+            }
+            
+            // Guardar en localStorage
+            saveOrdersToStorage();
+            
+            // Actualizar la interfaz
+            updateOrderList();
+            updateSummaryWithFilters(currentFilteredOrders || orders);
+            
+            // Limpiar formulario
+            resetForm();
+            
+            // Enfocar el primer campo para el siguiente pedido
+            document.getElementById('clientName').focus();
+        });
+        
+        // Función para resetear el formulario
+        function resetForm() {
+            document.getElementById('orderForm').reset();
+            document.getElementById('clientName').value = '';
+            
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('deliveryDate').min = today;
+            document.getElementById('deliveryDate').value = today;
+            
+            // Restablecer el vendedor a la opción por defecto
+            document.getElementById('sellerName').value = '';
+            
+            // Establecer estado de pago por defecto
+            document.getElementById('paymentPaid').checked = true;
+            
+            // Limpiar campo de edición
+            document.getElementById('editOrderId').value = '';
+            editingOrderId = null;
+            
+            // Limpiar sabores y agregar uno por defecto
+            document.getElementById('dessertsContainer').innerHTML = '';
+            addDessertItem();
+            
+            // Cambiar texto del botón
+            document.getElementById('submitOrderBtn').innerHTML = '<i class="bi bi-check-circle"></i> Registrar';
+            document.getElementById('submitOrderBtn').className = 'btn btn-julieta';
+            
+            // Ocultar botón de cancelar edición
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+        
+        // Cancelar edición
+        document.getElementById('cancelEditBtn').addEventListener('click', function() {
+            resetForm();
+        });
+        
+        // Editar un pedido
+        function editOrder(orderId) {
+            const order = orders.find(order => order.id == orderId);
+            if (!order) return;
+            
+            // Establecer modo edición
+            editingOrderId = orderId;
+            document.getElementById('editOrderId').value = orderId;
+            
+            // Llenar formulario con datos del pedido
+            document.getElementById('clientName').value = order.clientName;
+            document.getElementById('deliveryDate').value = order.deliveryDate;
+            document.getElementById('sellerName').value = order.sellerName;
+            
+            // Establecer estado de pago
+            if (order.paymentStatus === 'pagado') {
+                document.getElementById('paymentPaid').checked = true;
+            } else {
+                document.getElementById('paymentPending').checked = true;
+            }
+            
+            // Limpiar sabores anteriores
+            document.getElementById('dessertsContainer').innerHTML = '';
+            dessertCounter = 0;
+            
+            // Agregar sabores del pedido
+            order.desserts.forEach(dessert => {
+                addDessertItem(dessert.flavor, dessert.quantity);
+            });
+            
+            // Cambiar texto del botón
+            document.getElementById('submitOrderBtn').innerHTML = '<i class="bi bi-pencil-square"></i> Actualizar';
+            document.getElementById('submitOrderBtn').className = 'btn btn-warning';
+            
+            // Mostrar botón de cancelar edición
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            
+            // Desplazar hacia el formulario
+            document.getElementById('clientName').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Cambiar estado de pago
+        function changePaymentStatus(orderId) {
+            const order = orders.find(order => order.id == orderId);
+            if (!order) return;
+            
+            paymentModalOrderId = orderId;
+            
+            // Llenar datos en el modal
+            document.getElementById('modalOrderId').textContent = orderId;
+            document.getElementById('modalClientName').textContent = order.clientName;
+            document.getElementById('modalOrderTotal').textContent = `$${order.total.toLocaleString()}`;
+            
+            // Establecer estado actual
+            if (order.paymentStatus === 'pagado') {
+                document.getElementById('modalPaymentPaid').checked = true;
+            } else {
+                document.getElementById('modalPaymentPending').checked = true;
+            }
+            
+            // Mostrar modal
+            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            paymentModal.show();
+        }
+        
+        // Confirmar cambio de estado de pago
+        document.getElementById('confirmPaymentChange').addEventListener('click', function() {
+            const newStatus = document.querySelector('input[name="modalPaymentStatus"]:checked').value;
+            const orderIndex = orders.findIndex(order => order.id == paymentModalOrderId);
+            
+            if (orderIndex !== -1) {
+                orders[orderIndex].paymentStatus = newStatus;
+                saveOrdersToStorage();
+                updateOrderList();
+                updateSummaryWithFilters(currentFilteredOrders || orders);
+                
+                // Cerrar modal
+                const paymentModal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                paymentModal.hide();
+                
+                alert(`Estado de pago actualizado para el pedido #${paymentModalOrderId}`);
+            }
+        });
+        
+        // Actualizar la lista de pedidos en la tabla
+        function updateOrderList(filteredOrders = null) {
+            const ordersToDisplay = filteredOrders || orders;
+            currentFilteredOrders = ordersToDisplay;
+            isFiltered = filteredOrders !== null;
+            
+            const ordersTable = document.getElementById('ordersTable');
+            const emptyOrders = document.getElementById('emptyOrders');
+            
+            // Mostrar u ocultar mensaje de estado vacío
+            if (ordersToDisplay.length === 0) {
+                emptyOrders.style.display = 'block';
+                ordersTable.innerHTML = '';
+            } else {
+                emptyOrders.style.display = 'none';
+                
+                // Generar filas de la tabla
+                let tableHTML = '';
+                
+                // Ordenar por ID descendente (más recientes primero)
+                const sortedOrders = [...ordersToDisplay].sort((a, b) => b.id - a.id);
+                
+                sortedOrders.forEach(order => {
+                    // Crear una cadena con los sabores y cantidades (versión completa y resumida)
+                    let flavorsHTML = '';
+                    let flavorsMobile = '';
+                    let flavorCount = 0;
+                    
+                    order.desserts.forEach(dessert => {
+                        let flavorClass = '';
+                        if (dessert.flavor === 'Maracuyá') flavorClass = 'flavor-maracuya';
+                        else if (dessert.flavor === 'Milo') flavorClass = 'flavor-milo';
+                        else if (dessert.flavor === 'Oreo') flavorClass = 'flavor-oreo';
+                        
+                        flavorsHTML += `<div><span class="flavor-tag ${flavorClass}">${dessert.quantity} ${dessert.flavor}</span></div>`;
+                        
+                        // Versión resumida para móvil
+                        if (flavorCount < 2) {
+                            flavorsMobile += `${dessert.quantity} ${dessert.flavor.substring(0, 3)} `;
+                            flavorCount++;
+                        }
+                    });
+                    
+                    if (order.desserts.length > 2) {
+                        flavorsMobile += `+${order.desserts.length - 2}`;
+                    }
+                    
+                    // Determinar clase para estado de pago
+                    const paymentClass = order.paymentStatus === 'pagado' ? 'payment-paid' : 'payment-pending';
+                    const paymentText = order.paymentStatus === 'pagado' ? 'Pagado' : 'Debe';
+                    const paymentMobile = order.paymentStatus === 'pagado' ? 'P' : 'D';
+                    
+                    tableHTML += `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.clientName}</td>
+                        <td class="d-none d-md-table-cell">${flavorsHTML}</td>
+                        <td class="d-table-cell d-md-none">
+                            <span class="badge bg-secondary" title="${order.desserts.map(d => `${d.quantity} ${d.flavor}`).join(', ')}">
+                                ${flavorsMobile}
+                            </span>
+                        </td>
+                        <td>${order.totalQuantity}</td>
+                        <td>$${order.total.toLocaleString()}</td>
+                        <td class="d-none d-sm-table-cell">${formatDate(order.deliveryDate)}</td>
+                        <td class="d-table-cell d-sm-none">
+                            <span class="small">${formatDate(order.deliveryDate).substring(0, 5)}</span>
+                        </td>
+                        <td><span class="seller-badge d-none d-md-inline">${order.sellerName}</span>
+                            <span class="seller-badge d-md-none">${order.sellerName.substring(0, 1)}</span></td>
+                        <td>
+                            <span class="payment-status ${paymentClass} d-none d-md-inline">${paymentText}</span>
+                            <span class="payment-status ${paymentClass} d-md-none" title="${paymentText}">${paymentMobile}</span>
+                            <button class="btn btn-sm btn-payment btn-outline-secondary ms-1" onclick="changePaymentStatus(${order.id})" title="Cambiar estado de pago">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </td>
+                        <td class="actions-cell">
+                            <button class="btn-edit" onclick="editOrder(${order.id})" title="Editar pedido">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn-delete" onclick="deleteOrder(${order.id})" title="Eliminar pedido">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                });
+                
+                ordersTable.innerHTML = tableHTML;
+            }
+            
+            // Actualizar contadores
+            const pendingOrders = ordersToDisplay.filter(order => order.paymentStatus === 'debe').length;
+            document.getElementById('orderCount').textContent = `${ordersToDisplay.length} ${ordersToDisplay.length === 1 ? 'pedido' : 'pedidos'}`;
+            document.getElementById('pendingCount').textContent = `${pendingOrders} pendientes`;
+            
+            // Actualizar contadores de filtro
+            document.getElementById('filteredCount').textContent = ordersToDisplay.length;
+            document.getElementById('totalCount').textContent = orders.length;
+            
+            // Actualizar indicador de filtro
+            const filterIndicator = document.getElementById('isFilteredIndicator');
+            if (isFiltered) {
+                filterIndicator.style.display = 'inline';
+            } else {
+                filterIndicator.style.display = 'none';
+            }
+            
+            // Actualizar tipo de resumen
+            updateSummaryType(isFiltered);
+        }
+        
+        // Actualizar el tipo de resumen (filtrado o completo)
+        function updateSummaryType(filtered) {
+            const summaryType = document.getElementById('summaryType');
+            const resetSummaryBtn = document.getElementById('resetSummaryBtn');
+            const filteredSummaryAlert = document.getElementById('filteredSummaryAlert');
+            const sellerSummaryTitle = document.getElementById('sellerSummaryTitle');
+            
+            if (filtered) {
+                summaryType.textContent = 'Pedidos filtrados';
+                summaryType.className = 'badge bg-warning';
+                resetSummaryBtn.style.display = 'inline-block';
+                filteredSummaryAlert.style.display = 'block';
+                sellerSummaryTitle.textContent = 'Vendedores (filtrados)';
+                
+                // Agregar clase especial a las tarjetas de resumen
+                document.getElementById('summaryTotalOrdersCard').classList.add('summary-filtered');
+                document.getElementById('summaryTotalDessertsCard').classList.add('summary-filtered');
+                document.getElementById('summaryTotalSalesCard').classList.add('summary-filtered');
+                document.getElementById('summaryPendingAmountCard').classList.add('summary-filtered');
+                document.getElementById('summaryMaracuyaCard').classList.add('summary-filtered');
+                document.getElementById('summaryMiloCard').classList.add('summary-filtered');
+                document.getElementById('summaryOreoCard').classList.add('summary-filtered');
+            } else {
+                summaryType.textContent = 'Todos los pedidos';
+                summaryType.className = 'badge bg-info';
+                resetSummaryBtn.style.display = 'none';
+                filteredSummaryAlert.style.display = 'none';
+                sellerSummaryTitle.textContent = 'Todos los vendedores';
+                
+                // Remover clase especial de las tarjetas de resumen
+                document.getElementById('summaryTotalOrdersCard').classList.remove('summary-filtered');
+                document.getElementById('summaryTotalDessertsCard').classList.remove('summary-filtered');
+                document.getElementById('summaryTotalSalesCard').classList.remove('summary-filtered');
+                document.getElementById('summaryPendingAmountCard').classList.remove('summary-filtered');
+                document.getElementById('summaryMaracuyaCard').classList.remove('summary-filtered');
+                document.getElementById('summaryMiloCard').classList.remove('summary-filtered');
+                document.getElementById('summaryOreoCard').classList.remove('summary-filtered');
+            }
+        }
+        
+        // Formatear fecha para mostrar
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // Eliminar un pedido
+        function deleteOrder(orderId) {
+            if (confirm('¿Está seguro de que desea eliminar este pedido? Esta acción no se puede deshacer.')) {
+                orders = orders.filter(order => order.id !== orderId);
+                saveOrdersToStorage();
+                updateOrderList();
+                updateSummaryWithFilters(currentFilteredOrders || orders);
+                
+                // Si hay filtros aplicados, también actualizar la vista filtrada
+                applyFilters();
+                
+                alert('Pedido eliminado correctamente.');
+            }
+        }
+        
+        // Actualizar resumen de ventas con filtros
+        function updateSummaryWithFilters(filteredOrders) {
+            const ordersToSummarize = filteredOrders || orders;
+            
+            // Calcular estadísticas para los pedidos filtrados
+            const totalOrders = ordersToSummarize.length;
+            const totalDesserts = ordersToSummarize.reduce((sum, order) => sum + order.totalQuantity, 0);
+            const totalSales = ordersToSummarize.reduce((sum, order) => sum + order.total, 0);
+            const pendingAmount = ordersToSummarize
+                .filter(order => order.paymentStatus === 'debe')
+                .reduce((sum, order) => sum + order.total, 0);
+            
+            // Calcular total por sabor
+            let totalMaracuya = 0;
+            let totalMilo = 0;
+            let totalOreo = 0;
+            
+            ordersToSummarize.forEach(order => {
+                order.desserts.forEach(dessert => {
+                    if (dessert.flavor === 'Maracuyá') totalMaracuya += dessert.quantity;
+                    else if (dessert.flavor === 'Milo') totalMilo += dessert.quantity;
+                    else if (dessert.flavor === 'Oreo') totalOreo += dessert.quantity;
+                });
+            });
+            
+            // Actualizar los valores principales
+            document.getElementById('totalOrders').textContent = totalOrders;
+            document.getElementById('totalDesserts').textContent = totalDesserts;
+            document.getElementById('totalSales').textContent = `$${totalSales.toLocaleString()}`;
+            document.getElementById('pendingAmount').textContent = `$${pendingAmount.toLocaleString()}`;
+            document.getElementById('totalMaracuya').textContent = totalMaracuya;
+            document.getElementById('totalMilo').textContent = totalMilo;
+            document.getElementById('totalOreo').textContent = totalOreo;
+            
+            // Actualizar los valores filtrados en los indicadores
+            document.getElementById('filteredOrders').textContent = totalOrders;
+            document.getElementById('filteredDesserts').textContent = totalDesserts;
+            document.getElementById('filteredSales').textContent = `$${totalSales.toLocaleString()}`;
+            document.getElementById('filteredPending').textContent = `$${pendingAmount.toLocaleString()}`;
+            document.getElementById('filteredMaracuya').textContent = totalMaracuya;
+            document.getElementById('filteredMilo').textContent = totalMilo;
+            document.getElementById('filteredOreo').textContent = totalOreo;
+            
+            // Actualizar resumen por vendedor con los pedidos filtrados
+            updateSellerSummaryWithFilters(ordersToSummarize);
+        }
+        
+        // Actualizar resumen por vendedor con filtros
+        function updateSellerSummaryWithFilters(filteredOrders) {
+            const sellerSummary = document.getElementById('sellerSummary');
+            const ordersToSummarize = filteredOrders || orders;
+            
+            // Calcular estadísticas por vendedor
+            const sellerStats = {};
+            
+            // Inicializar estadísticas para cada vendedor
+            SELLERS.forEach(seller => {
+                sellerStats[seller] = {
+                    orders: 0,
+                    desserts: 0,
+                    sales: 0,
+                    pending: 0
+                };
+            });
+            
+            // Calcular estadísticas
+            ordersToSummarize.forEach(order => {
+                const seller = order.sellerName;
+                if (sellerStats[seller]) {
+                    sellerStats[seller].orders += 1;
+                    sellerStats[seller].desserts += order.totalQuantity;
+                    sellerStats[seller].sales += order.total;
+                    
+                    if (order.paymentStatus === 'debe') {
+                        sellerStats[seller].pending += order.total;
+                    }
+                }
+            });
+            
+            // Generar HTML para el resumen por vendedor
+            let sellerHTML = '';
+            
+            SELLERS.forEach(seller => {
+                const stats = sellerStats[seller];
+                
+                sellerHTML += `
+                <div class="seller-summary-item">
+                    <div class="p-2 border rounded h-100 ${isFiltered ? 'summary-filtered' : ''}">
+                        <small class="text-muted">${seller}</small>
+                        <div class="mt-2">
+                            <div class="small">Pedidos: <strong>${stats.orders}</strong></div>
+                            <div class="small">Postres: <strong>${stats.desserts}</strong></div>
+                            <div class="small">Ventas: <strong>$${stats.sales.toLocaleString()}</strong></div>
+                            <div class="small">Por cobrar: <strong>$${stats.pending.toLocaleString()}</strong></div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            sellerSummary.innerHTML = sellerHTML;
+        }
+        
+        // Función de resumen anterior (mantenida para compatibilidad)
+        function updateSummary() {
+            updateSummaryWithFilters(orders);
+        }
+        
+        // Función de resumen por vendedor anterior (mantenida para compatibilidad)
+        function updateSellerSummary() {
+            updateSellerSummaryWithFilters(orders);
+        }
+        
+        // Aplicar filtros
+        function applyFilters() {
+            const filterClient = document.getElementById('filterClient').value.toLowerCase();
+            const filterFlavor = document.getElementById('filterFlavor').value;
+            const filterSeller = document.getElementById('filterSeller').value;
+            const filterPayment = document.getElementById('filterPayment').value;
+            const filterDate = document.getElementById('filterDate').value;
+            
+            let filteredOrders = orders;
+            
+            // Filtrar por cliente
+            if (filterClient) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.clientName.toLowerCase().includes(filterClient)
+                );
+            }
+            
+            // Filtrar por sabor
+            if (filterFlavor !== 'all') {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.desserts.some(dessert => dessert.flavor === filterFlavor)
+                );
+            }
+            
+            // Filtrar por vendedor
+            if (filterSeller !== 'all') {
+                filteredOrders = filteredOrders.filter(order => order.sellerName === filterSeller);
+            }
+            
+            // Filtrar por estado de pago
+            if (filterPayment !== 'all') {
+                filteredOrders = filteredOrders.filter(order => order.paymentStatus === filterPayment);
+            }
+            
+            // Filtrar por fecha de entrega
+            if (filterDate) {
+                filteredOrders = filteredOrders.filter(order => order.deliveryDate === filterDate);
+            }
+            
+            // Actualizar la tabla con los pedidos filtrados
+            updateOrderList(filteredOrders);
+            
+            // Actualizar el resumen con los pedidos filtrados
+            updateSummaryWithFilters(filteredOrders);
+        }
+        
+        // Agregar eventos a los filtros
+        document.getElementById('filterClient').addEventListener('input', applyFilters);
+        document.getElementById('filterFlavor').addEventListener('change', applyFilters);
+        document.getElementById('filterSeller').addEventListener('change', applyFilters);
+        document.getElementById('filterPayment').addEventListener('change', applyFilters);
+        document.getElementById('filterDate').addEventListener('change', applyFilters);
+        
+        // Limpiar filtros
+        function clearFilters() {
+            document.getElementById('filterClient').value = '';
+            document.getElementById('filterFlavor').value = 'all';
+            document.getElementById('filterSeller').value = 'all';
+            document.getElementById('filterPayment').value = 'all';
+            document.getElementById('filterDate').value = '';
+            updateOrderList();
+            updateSummaryWithFilters(orders);
+            updateSummaryType(false);
+        }
+        
+        document.getElementById('clearFilters').addEventListener('click', clearFilters);
+        
+        // Generar informe por vendedor
+        document.getElementById('generateReport').addEventListener('click', function() {
+            const selectedSeller = document.getElementById('sellerReportSelect').value;
+            const selectedPayment = document.getElementById('paymentReportSelect').value;
+            const reportResult = document.getElementById('reportResult');
+            
+            let reportOrders = currentFilteredOrders || orders;
+            let reportTitle = '';
+            
+            if (selectedSeller !== 'all') {
+                reportOrders = reportOrders.filter(order => order.sellerName === selectedSeller);
+                reportTitle = `Informe de ventas para ${selectedSeller}`;
+            } else {
+                reportTitle = isFiltered ? 'Informe de pedidos filtrados' : 'Informe general de ventas';
+            }
+            
+            // Filtrar por estado de pago si es necesario
+            if (selectedPayment !== 'all') {
+                reportOrders = reportOrders.filter(order => order.paymentStatus === selectedPayment);
+                reportTitle += ` - ${selectedPayment === 'pagado' ? 'Pagados' : 'Pendientes'}`;
+            }
+            
+            if (reportOrders.length === 0) {
+                reportResult.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No hay pedidos para mostrar en el informe.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calcular estadísticas
+            const totalOrders = reportOrders.length;
+            const totalDesserts = reportOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
+            const totalSales = reportOrders.reduce((sum, order) => sum + order.total, 0);
+            
+            // Contar pedidos por estado de pago
+            const paidCount = reportOrders.filter(order => order.paymentStatus === 'pagado').length;
+            const pendingCount = reportOrders.filter(order => order.paymentStatus === 'debe').length;
+            
+            // Agrupar por sabor
+            let flavors = {
+                'Maracuyá': 0,
+                'Milo': 0,
+                'Oreo': 0
+            };
+            
+            reportOrders.forEach(order => {
+                order.desserts.forEach(dessert => {
+                    flavors[dessert.flavor] += dessert.quantity;
+                });
+            });
+            
+            // Crear HTML del informe
+            let reportHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">${reportTitle}</h5>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted">Total Pedidos</small>
+                                    <h4>${totalOrders}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted">Total Postres</small>
+                                    <h4>${totalDesserts}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted">Ventas Totales</small>
+                                    <h4>$${totalSales.toLocaleString()}</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-2 border rounded">
+                                    <small class="text-muted">Estado de Pago</small>
+                                    <div class="mt-1">
+                                        <span class="payment-status payment-paid">${paidCount} Pagados</span>
+                                        <span class="payment-status payment-pending ms-1">${pendingCount} Pendientes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4">Distribución por sabor:</h6>
+                        <div class="row">
+            `;
+            
+            // Agregar estadísticas por sabor
+            for (const flavor in flavors) {
+                if (flavors[flavor] > 0) {
+                    let flavorClass = '';
+                    if (flavor === 'Maracuyá') flavorClass = 'flavor-maracuya';
+                    else if (flavor === 'Milo') flavorClass = 'flavor-milo';
+                    else if (flavor === 'Oreo') flavorClass = 'flavor-oreo';
+                    
+                    reportHTML += `
+                        <div class="col-md-4 mb-2">
+                            <div class="p-2 border rounded">
+                                <small class="text-muted">${flavor}</small>
+                                <h5><span class="${flavorClass} flavor-tag">${flavors[flavor]} unidades</span></h5>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            reportHTML += `
+                        </div>
+                        
+                        <h6 class="mt-4">Detalle de pedidos:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Cliente</th>
+                                        <th>Sabores</th>
+                                        <th>Cantidad</th>
+                                        <th>Total</th>
+                                        <th>Fecha Entrega</th>
+                                        <th>Estado Pago</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+            
+            // Ordenar por ID descendente (más recientes primero)
+            const sortedReportOrders = [...reportOrders].sort((a, b) => b.id - a.id);
+            
+            // Agregar filas de pedidos
+            sortedReportOrders.forEach(order => {
+                // Crear una cadena con los sabores y cantidades
+                let flavorsDesc = '';
+                order.desserts.forEach(dessert => {
+                    flavorsDesc += `${dessert.quantity} ${dessert.flavor}, `;
+                });
+                // Eliminar la última coma y espacio
+                flavorsDesc = flavorsDesc.slice(0, -2);
+                
+                const paymentClass = order.paymentStatus === 'pagado' ? 'payment-paid' : 'payment-pending';
+                const paymentText = order.paymentStatus === 'pagado' ? 'Pagado' : 'Debe';
+                
+                reportHTML += `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.clientName}</td>
+                        <td>${flavorsDesc}</td>
+                        <td>${order.totalQuantity}</td>
+                        <td>$${order.total.toLocaleString()}</td>
+                        <td>${formatDate(order.deliveryDate)}</td>
+                        <td><span class="payment-status ${paymentClass}">${paymentText}</span></td>
+                    </tr>
+                `;
+            });
+            
+            reportHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="printReport()">
+                                <i class="bi bi-printer"></i> Imprimir Informe
+                            </button>
+                            <button class="btn btn-sm btn-excel ms-2" onclick="exportReportToExcel('${reportTitle}')">
+                                <i class="bi bi-file-earmark-excel"></i> Exportar Informe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            reportResult.innerHTML = reportHTML;
+        });
+        
+        // Función para exportar el informe actual a Excel
+        function exportReportToExcel(reportTitle) {
+            try {
+                // Obtener datos del informe actual
+                const selectedSeller = document.getElementById('sellerReportSelect').value;
+                const selectedPayment = document.getElementById('paymentReportSelect').value;
+                
+                let reportOrders = currentFilteredOrders || orders;
+                
+                if (selectedSeller !== 'all') {
+                    reportOrders = reportOrders.filter(order => order.sellerName === selectedSeller);
+                }
+                
+                if (selectedPayment !== 'all') {
+                    reportOrders = reportOrders.filter(order => order.paymentStatus === selectedPayment);
+                }
+                
+                if (reportOrders.length === 0) {
+                    alert('No hay datos para exportar en el informe actual.');
+                    return;
+                }
+                
+                // Preparar datos para Excel
+                const excelData = [];
+                
+                // Título y fecha
+                excelData.push([reportTitle]);
+                excelData.push(['Generado el:', new Date().toLocaleString('es-ES')]);
+                excelData.push([]);
+                
+                // Estadísticas
+                const totalOrders = reportOrders.length;
+                const totalDesserts = reportOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
+                const totalSales = reportOrders.reduce((sum, order) => sum + order.total, 0);
+                const paidCount = reportOrders.filter(order => order.paymentStatus === 'pagado').length;
+                const pendingCount = reportOrders.filter(order => order.paymentStatus === 'debe').length;
+                
+                excelData.push(['ESTADÍSTICAS']);
+                excelData.push(['Total Pedidos:', totalOrders]);
+                excelData.push(['Total Postres:', totalDesserts]);
+                excelData.push(['Ventas Totales:', `$${totalSales.toLocaleString()}`]);
+                excelData.push(['Pagados:', paidCount]);
+                excelData.push(['Pendientes:', pendingCount]);
+                excelData.push([]);
+                
+                // Encabezados de tabla
+                excelData.push(['DETALLE DE PEDIDOS']);
+                excelData.push([
+                    'ID', 'Cliente', 'Sabores', 'Cantidad Total', 'Total', 
+                    'Fecha Entrega', 'Vendedor', 'Estado Pago'
+                ]);
+                
+                // Datos de pedidos
+                reportOrders.forEach(order => {
+                    let flavorsStr = '';
+                    order.desserts.forEach(dessert => {
+                        flavorsStr += `${dessert.quantity} ${dessert.flavor}, `;
+                    });
+                    flavorsStr = flavorsStr.slice(0, -2);
+                    
+                    excelData.push([
+                        order.id,
+                        order.clientName,
+                        flavorsStr,
+                        order.totalQuantity,
+                        order.total,
+                        formatDate(order.deliveryDate),
+                        order.sellerName,
+                        order.paymentStatus === 'pagado' ? 'Pagado' : 'Debe'
+                    ]);
+                });
+                
+                // Crear libro de trabajo
+                const ws = XLSX.utils.aoa_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Informe');
+                
+                // Generar y descargar archivo
+                const filename = `Informe_${reportTitle.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}`;
+                XLSX.writeFile(wb, `${filename}.xlsx`);
+                
+                alert(`Informe exportado exitosamente: ${reportOrders.length} pedidos`);
+            } catch (error) {
+                console.error('Error al exportar informe:', error);
+                alert('Error al exportar el informe. Por favor, intente nuevamente.');
+            }
+        }
+        
+        // Función para imprimir el informe
+        function printReport() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
